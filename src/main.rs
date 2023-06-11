@@ -2,6 +2,8 @@ use crossterm::cursor::{Hide, Show};
 use crossterm::event::{self, Event, KeyCode};
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{terminal, ExecutableCommand};
+use invaders::frame::Drawable;
+use invaders::player::Player;
 use invaders::{frame, render};
 use rusty_audio::Audio;
 use std::error::Error;
@@ -47,10 +49,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
+    // Create player
+    let mut player = Player::new();
+
     // Game loop
     'gameloop: loop {
         // Per-frame init
-        let curr_frame = frame::new_frame();
+        let mut curr_frame = frame::new_frame();
 
         // Input
         while event::poll(Duration::default())? {
@@ -60,12 +65,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                         audio.play("lose");
                         break 'gameloop;
                     }
+                    KeyCode::Left => player.move_left(),
+                    KeyCode::Right => player.move_right(),
                     _ => {}
                 }
             }
         }
 
         // Draw and render
+        player.draw(&mut curr_frame);
         let _ = render_tx.send(curr_frame); // Ignore error because render thread might not be ready
         thread::sleep(Duration::from_millis(1));
     }
