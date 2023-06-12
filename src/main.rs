@@ -8,7 +8,7 @@ use invaders::{frame, render};
 use rusty_audio::Audio;
 use std::error::Error;
 use std::sync::mpsc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use std::{io, thread};
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -52,9 +52,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Create player
     let mut player = Player::new();
 
+    // Create time instant
+    let mut instant = Instant::now();
+
     // Game loop
     'gameloop: loop {
         // Per-frame init
+        let delta = instant.elapsed();
+        instant = Instant::now();
         let mut curr_frame = frame::new_frame();
 
         // Input
@@ -67,10 +72,18 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     KeyCode::Left => player.move_left(),
                     KeyCode::Right => player.move_right(),
+                    KeyCode::Char(' ') | KeyCode::Enter => {
+                        if player.shoot() {
+                            audio.play("pew");
+                        }
+                    }
                     _ => {}
                 }
             }
         }
+
+        // Updates
+        player.update(delta);
 
         // Draw and render
         player.draw(&mut curr_frame);
